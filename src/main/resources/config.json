@@ -1,0 +1,25 @@
+{
+    "probabilidadFallo": 0.1,
+    "probabilidadNormal": 0.6,
+    "probabilidadFueraDeRango": 0.3,
+    "sensores": [
+    {
+        "tipo": "temperatura",
+        "tema": "TEMPERATURA_DATA",
+        "minimo": 68,
+        "maximo": 89
+    },
+    {
+        "tipo": "Ph",
+        "tema": "PH_DATA",
+        "minimo": 6,
+        "maximo": 8
+    },
+    {
+        "tipo": "Oxigeno",
+        "tema": "OXIGENO_DATA",
+        "minimo": 2,
+        "maximo": 11
+    }
+    ]
+}
