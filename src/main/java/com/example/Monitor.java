@@ -7,7 +7,6 @@ import org.zeromq.ZContext;
 
 import com.opencsv.CSVWriter;
 
-import java.io.FileWriter;
 import java.io.IOException;
 public class Monitor {
     private String tipoSensor;
@@ -101,7 +100,7 @@ public class Monitor {
         }
     }
     public static void guardar(String tema, String fecha, String hora, Double medida){
-        try (CSVWriter writer = new CSVWriter(new FileWriter("src\\main\\resources\\datos.csv"))) {
+        try (CSVWriter writer = new CSVWriter(new FileWriter("src\\main\\resources\\datos.csv", true))) {
             // Crear un array de strings con los datos
             String[] datos = {tema, fecha, hora, Double.toString(medida)};
 
