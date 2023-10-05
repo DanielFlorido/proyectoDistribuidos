@@ -38,7 +38,7 @@ public class Monitor {
         Monitor monitor= comprobarArgs(args);
         ZContext zContext= new ZContext();
         ZMQ.Socket socket= zContext.createSocket(SocketType.SUB);
-        socket.connect("tcp://localhost:5556");
+        socket.connect("tcp://25.3.52.25:5556");
         socket.subscribe(monitor.getTema());
         try {
             while (!Thread.currentThread().isInterrupted()) {
@@ -73,14 +73,16 @@ public class Monitor {
         String[] split= mensaje.split(" ");
         if (split.length >= 3) {
             String tema = split[0];      
-            String fecha = split[1];    
-            String medidaStr = split[2]; 
+            String fecha = split[1];   
+            String hora = split[2];
+            String medidaStr = split[3]; 
         
             double medida = Double.parseDouble(medidaStr);
         
             System.out.println("Tema: " + tema);
             System.out.println("Fecha: " + fecha);
             System.out.println("Medida: " + medida);
+            System.out.println("Hora: "+ hora);
             return medida;
         } else {
             System.err.println("Mensaje recibido no tiene el formato esperado.");
