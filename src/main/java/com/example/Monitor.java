@@ -1,8 +1,14 @@
 package com.example;
+import java.io.FileWriter;
+
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
+import com.opencsv.CSVWriter;
+
+import java.io.FileWriter;
+import java.io.IOException;
 public class Monitor {
     private String tipoSensor;
     private String tema;
@@ -83,10 +89,29 @@ public class Monitor {
             System.out.println("Fecha: " + fecha);
             System.out.println("Medida: " + medida);
             System.out.println("Hora: "+ hora);
+            if(medida>0){
+                guardar(tema, fecha, hora, medida);
+            }else{
+                System.out.println("Valor Erroneo");
+            }
             return medida;
         } else {
             System.err.println("Mensaje recibido no tiene el formato esperado.");
             return -1;
+        }
+    }
+    public static void guardar(String tema, String fecha, String hora, Double medida){
+        try (CSVWriter writer = new CSVWriter(new FileWriter("src\\main\\resources\\datos.csv"))) {
+            // Crear un array de strings con los datos
+            String[] datos = {tema, fecha, hora, Double.toString(medida)};
+
+            //writer.writeNext(new String[]{"Tema", "Fecha","Hora", "Medida"});
+
+            writer.writeNext(datos);
+
+            System.out.println("Datos guardados en " + "datos.csv");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
