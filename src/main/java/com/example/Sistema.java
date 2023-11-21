@@ -6,11 +6,12 @@ import org.zeromq.ZMQ;
 
 public class Sistema {
     public static void main(String[] args){
+        String urlSistema= "25.5.211.175";
         ZContext zContext= new ZContext();
         ZMQ.Socket socketPublicar = zContext.createSocket(SocketType.PUB);
-        socketPublicar.bind("tcp://localhost:5556");
+        socketPublicar.bind("tcp://"+urlSistema+":5556");
         ZMQ.Socket socketRecibir = zContext.createSocket(SocketType.PULL);
-        socketRecibir.bind("tcp://localhost:5555");
+        socketRecibir.bind("tcp://"+ urlSistema +":5555");
         
         try {
             while (!Thread.currentThread().isInterrupted()) {
