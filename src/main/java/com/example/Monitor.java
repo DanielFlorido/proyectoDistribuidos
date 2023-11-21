@@ -20,7 +20,7 @@ public class Monitor {
     private Connection connection;
     public Monitor() {
         try {
-            String url = "jdbc:mysql://25.5.211.175:3306/nombre_base_de_datos"; // Replace with your database URL
+            String url = "jdbc:mysql://25.5.211.175:3306/distri"; // Replace with your database URL
             String username = "root"; // Replace with your database username
             String password = "123456"; // Replace with your database password
 
