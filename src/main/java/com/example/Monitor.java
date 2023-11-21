@@ -8,12 +8,27 @@ import org.zeromq.ZContext;
 import com.opencsv.CSVWriter;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 public class Monitor {
     private String tipoSensor;
     private String tema;
     private double minimo;
     private double maximo;
-    
+    private Connection connection;
+    public Monitor() {
+        try {
+            String url = "jdbc:mysql://25.5.211.175:3306/nombre_base_de_datos"; // Replace with your database URL
+            String username = "root"; // Replace with your database username
+            String password = "123456"; // Replace with your database password
+
+            connection = DriverManager.getConnection(url, username, password);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
     public String getTipoSensor() {
         return tipoSensor;
     }
@@ -90,7 +105,7 @@ public class Monitor {
             System.out.println("Medida: " + medida);
             System.out.println("Hora: "+ hora);
             if(medida>0){
-                guardar(tema, fecha, hora, medida);
+                guardarEnDB(tema, fecha, hora, medida);
             }else{
                 System.out.println("Valor Erroneo");
             }
@@ -98,6 +113,24 @@ public class Monitor {
         } else {
             System.err.println("Mensaje recibido no tiene el formato esperado.");
             return -1;
+        }
+    }
+    private void guardarEnDB(String tema, String fecha, String hora, Double medida) {
+        // Prepare SQL statement to insert data into the 'medidas' table
+        String sql = "INSERT INTO medidas (tipo_sensor, fecha, hora, medida) VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            // Set the values for the prepared statement
+            statement.setString(1, tema);
+            statement.setString(2, fecha);
+            statement.setString(3, hora);
+            statement.setDouble(4, medida);
+
+            // Execute the prepared statement to insert the data
+            statement.executeUpdate();
+            System.out.println("Datos guardados en la base de datos.");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
     public static void guardar(String tema, String fecha, String hora, Double medida){
