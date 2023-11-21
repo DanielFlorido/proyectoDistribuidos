@@ -42,8 +42,9 @@ public class Monitor {
         System.out.println("Creando monitor");
         Monitor monitor= comprobarArgs(args);
         ZContext zContext= new ZContext();
+        String urlSistema= "25.5.211.175";
         ZMQ.Socket socket= zContext.createSocket(SocketType.SUB);
-        socket.connect("tcp://25.3.52.25:5556");
+        socket.connect("tcp://"+ urlSistema +":5556");
         socket.subscribe(monitor.getTema());
         try {
             while (!Thread.currentThread().isInterrupted()) {

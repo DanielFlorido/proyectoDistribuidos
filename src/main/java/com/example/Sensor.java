@@ -109,6 +109,7 @@ public class Sensor {
     public static void main(String[] args) {
         Sensor sensor = validarArgumentos(args);
         if (sensor != null) {
+            String urlSistema="25.5.211.175";
             System.out.println("Tipo de Sensor: " + sensor.getTipoSensor());
             System.out.println("Tiempo de Envio: " + sensor.getTiempoEnvio());
             System.out.println("Archivo de Configuracion: " + sensor.getArchivoConfig());
@@ -117,7 +118,7 @@ public class Sensor {
             System.out.println("Tema: "+ sensor.getTema());
             ZContext zContext = new ZContext();
             ZMQ.Socket socket = zContext.createSocket(SocketType.PUSH);
-            socket.connect("tcp://*:5555");
+            socket.connect("tcp://"+urlSistema+":5555");
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     LocalDateTime horaActual = LocalDateTime.now();
