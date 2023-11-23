@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Socket;
+import org.zeromq.ZMQException;
 import org.zeromq.ZContext;
 
 import com.opencsv.CSVWriter;
@@ -17,13 +18,19 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Enumeration;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 public class Monitor {
     private String tipoSensor;
     private String tema;
     private double minimo;
     private double maximo;
     private Connection connection;
+    private static String ip;
+    ZMQ.Socket socketLatido;
     private static String urlSistema="25.5.211.175";
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     public Monitor() {
         try {
             String url = "jdbc:mysql://25.5.211.175:3306/distri"; // Replace with your database URL
@@ -59,33 +66,51 @@ public class Monitor {
     public void setTema(String tema) {
         this.tema = tema;
     }
-    public static void main(String[] args){
+    public static String getIp() {
+        return ip;
+    }
+    public static void setIp(String ip) {
+        Monitor.ip = ip;
+    }
+    public ZMQ.Socket getSocketLatido() {
+        return socketLatido;
+    }
+    public void setSocketLatido(ZMQ.Socket socketLatido) {
+        this.socketLatido = socketLatido;
+    }
+    public static void main(String[] args) {
         System.out.println("Creando monitor");
-        Monitor monitor= comprobarArgs(args);
-        ZContext zContext= new ZContext();
-        
-        ZMQ.Socket socket= zContext.createSocket(SocketType.SUB);
-        socket.connect("tcp://"+ urlSistema +":5556");
+        Monitor monitor = comprobarArgs(args);
+        ZContext zContext = new ZContext();
+
+        // Create sockets
+        ZMQ.Socket socket = zContext.createSocket(SocketType.SUB);
+        ZMQ.Socket socketCalidad = zContext.createSocket(SocketType.PUSH);
+        monitor.socketLatido = zContext.createSocket(SocketType.REQ);
+
+        // Connect sockets
+        socket.connect("tcp://" + urlSistema + ":5556");
+        socketCalidad.connect("tcp://" + urlSistema + ":5557");
+        monitor.socketLatido.connect("tcp://" + urlSistema + ":5558");
+
+        monitor.crearConexion(monitor.socketLatido);
+                // Subscribe to monitor's topic
         socket.subscribe(monitor.getTema());
-        ZMQ.Socket socketCalidad= zContext.createSocket(SocketType.PUSH);
-        socketCalidad.connect("tcp://"+urlSistema +":5557");
-        ZMQ.Socket socketLatido = zContext.createSocket(SocketType.REP);
-        socketLatido.connect("tcp://"+urlSistema+":5558");
-        monitor.crearConexion(socketLatido);
+        monitor.iniciarEnvioLatidoPeriodico();
+        // Receive and process messages
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                byte[] mensaje= socket.recv();
-                String llegada= new String(mensaje, ZMQ.CHARSET);
-                System.out.println("Mensaje recibido: "+ llegada);
+                byte[] mensaje = socket.recv();
+                String llegada = new String(mensaje, ZMQ.CHARSET);
+                System.out.println("Mensaje recibido: " + llegada);
                 monitor.comprobarMedida(llegada, socketCalidad);
             }
-        } finally{
+        } finally {
             socket.close();
             socketCalidad.close();
-            socketLatido.close();
+            monitor.socketLatido.close();
             zContext.close();
         }
-        
     }
     public static Monitor comprobarArgs(String[] args){
         if (args.length != 1) {
@@ -102,6 +127,13 @@ public class Monitor {
         ReadConfiguration.leerArchivo("src\\main\\resources\\config.json", monitor);
         return monitor;
     }
+    private void iniciarEnvioLatidoPeriodico() {
+        scheduler.scheduleAtFixedRate(this::enviarLatidoPeriodico, 0, 5, TimeUnit.SECONDS);
+    }
+    private void enviarLatidoPeriodico() {
+        enviarLatido(socketLatido, getIp());
+    }
+    
     public double comprobarMedida(String mensaje, Socket socketCalidad){
         System.out.println("Partiendo Mensaje...");
         String mensaje2= mensaje;
@@ -162,14 +194,18 @@ public class Monitor {
             e.printStackTrace();
         }
     }
-    public void enviarLatido(Socket socketLatido){
-        socketLatido.send("Estoy vivo!");
+    public void enviarLatido(Socket socketLatido, String ip){
+        socketLatido.send("Vivo "+ ip);
+        byte[] response = socketLatido.recv(0);
+        System.out.println(response);
     }
     public String crearConexion(Socket socketLatido){
-        socketLatido.send("conectarme".getBytes(ZMQ.CHARSET), 0);
+        String mensaje = "conectarme "+ tipoSensor;
+        socketLatido.send(mensaje.getBytes(ZMQ.CHARSET), 0);
         byte[] response = socketLatido.recv(0);
         String serverIpAddress = new String(response, ZMQ.CHARSET);
         System.out.println("Dirección IP del servidor recibida: " + serverIpAddress);
+        ip= serverIpAddress;
         return serverIpAddress;
     }
     
