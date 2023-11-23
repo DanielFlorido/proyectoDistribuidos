@@ -16,9 +16,18 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class HealthCheck {
+    private static class TimerInfo {
+        Timer timer;
+        String tipoSensor;
+        // Agrega otros campos según sea necesario
+    
+        public TimerInfo(Timer timer, String tipoSensor) {
+            this.timer = timer;
+            this.tipoSensor = tipoSensor;
+        }
+    }
     private static String urlSistema = "25.5.211.175";
-    private Map<String, Timer> monitorTimers = new HashMap<>();
-
+    private Map<String, TimerInfo> monitorTimers = new HashMap<>();
     public static void main(String[] args) {
         HealthCheck healthCheck = new HealthCheck();
         healthCheck.startHealthCheck();
@@ -76,12 +85,28 @@ public class HealthCheck {
             String msjString = comando + " IP recibida: " + ipRecibida;
             System.out.println(msjString);
             socketLatido.send(msjString.getBytes(ZMQ.CHARSET));
-            // Aquí puedes realizar cualquier acción adicional con la IP recibida
+            
+            reiniciarTemporizador(ipRecibida);
+
         } else {
             System.out.println("Formato incorrecto para mensaje 'Vivo'");
         }
     }
-
+    private void reiniciarTemporizador(String ip) {
+        // Obtener la información del temporizador actual asociado a la dirección IP
+        TimerInfo timerInfo = monitorTimers.get(ip);
+    
+        // Cancelar el temporizador actual si existe
+        if (timerInfo != null && timerInfo.timer != null) {
+            timerInfo.timer.cancel();
+        }
+    
+        // Obtener el tipo de sensor asociado al temporizador actual
+        String tipoSensor = (timerInfo != null) ? timerInfo.tipoSensor : "";
+    
+        // Iniciar un nuevo temporizador para esta dirección IP
+        iniciarTemporizador(ip, tipoSensor);
+    }
     private void iniciarTemporizador(String ip, String tipoSensor) {
         Timer timer = new Timer(true); // true indica que el temporizador es de fondo
         timer.schedule(new TimerTask() {
@@ -95,7 +120,7 @@ public class HealthCheck {
         }, 20000); // 10000 milisegundos (30 segundos)
         
         // Almacenamos el temporizador asociado a la dirección IP del monitor
-        monitorTimers.put(ip, timer);
+        monitorTimers.put(ip, new TimerInfo(timer, tipoSensor));
     }
     private void crearNuevoMonitor(String tipoSensor) {
          try {
