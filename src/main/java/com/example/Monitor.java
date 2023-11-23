@@ -17,7 +17,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Enumeration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -197,7 +196,8 @@ public class Monitor {
     public void enviarLatido(Socket socketLatido, String ip){
         socketLatido.send("Vivo "+ ip);
         byte[] response = socketLatido.recv(0);
-        System.out.println(response);
+        String reString= new String(response, ZMQ.CHARSET);
+        System.out.println(reString);
     }
     public String crearConexion(Socket socketLatido){
         String mensaje = "conectarme "+ tipoSensor;
