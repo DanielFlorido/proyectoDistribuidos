@@ -10,7 +10,8 @@ public class HealthCheck {
     public static void main(String[] args) {
         ZContext zContext= new ZContext();
         ZMQ.Socket socketLatido = zContext.createSocket(SocketType.REP);
-        socketLatido.bind("tcp://25.5.211.175:5570");
+        socketLatido.bind("tcp://"+urlSistema+":5558");
+        System.out.println("Creando Healthcare");
         try{
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] request = socketLatido.recv(0);
@@ -18,14 +19,14 @@ public class HealthCheck {
                 System.out.println("Mensaje recibido: " + mensaje);
 
                 // Verificamos el tipo de mensaje
-                if (mensaje.equals("conectarme")) {
-                    // Obtén la dirección IP del cliente
+                if (mensaje.startsWith("conectarme")) {
+                    // Obtén la dirección IP del cliente 
                     String clientIpAddress = socketLatido.getLastEndpoint().substring(6);  // Eliminamos el prefijo "tcp://"
                     System.out.println("Dirección IP del cliente: " + clientIpAddress);
 
                     // Enviamos la dirección IP al cliente
                     socketLatido.send(clientIpAddress.getBytes(ZMQ.CHARSET), 0);
-                } else if (mensaje.startsWith("Vivo ")) {
+                } else if (mensaje.startsWith("Vivo")) {
                     // Extraemos la dirección IP del mensaje
                     String[] partes = mensaje.split(" ");
                     if (partes.length == 3) {
@@ -33,6 +34,7 @@ public class HealthCheck {
                         System.out.println("Vivo + IP recibida: " + ipRecibida);
                         // Aquí puedes realizar cualquier acción adicional con la IP recibida
                     } else {
+                        socketLatido.send("Formato incorrecto para mensaje 'Vivo'".getBytes(ZMQ.CHARSET));
                         System.out.println("Formato incorrecto para mensaje 'Vivo'");
                     }
                 } else {
